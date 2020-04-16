@@ -1,0 +1,75 @@
+import jieba
+import matplotlib.pyplot as plt
+import numpy as np
+import requests
+from wordcloud import WordCloud, ImageColorGenerator
+from PIL import Image
+from lxml import etree
+
+
+def main(url):
+    header = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3314.0 Safari/537.36 SE 2.X MetaSr 1.0'}
+    link = requests.get(url, headers=header)
+    link.encoding = link.apparent_encoding
+    html = etree.HTML(link.text)
+    p = html.xpath('//p//text()')
+    for i in p:
+        i = i + '\n'
+        with open('1.csv', 'a', encoding='utf-8') as f:
+            f.write(i)
+
+
+    #加载自定义词典
+    jieba.load_userdict('自定义词典.txt')
+    #添加词典
+    jieba.add_word('')
+    #删除词
+    jieba.del_word('')
+    #停止词
+    stopwords = set('')
+    stopwords.update(['', '', '', '', '', '', '', '', '', '', ''])
+
+
+
+    #加载文件
+    with open('1.csv', 'r', encoding='utf-8') as f:
+        mytexta = f.read()
+    #结巴分词
+    mytext = ' '.join(jieba.cut(mytexta, cut_all=False))
+
+
+    #词云
+    wordcloud = WordCloud(
+        font_path='simsun.ttf',
+        stopwords=stopwords,
+        background_color="pink",
+        width=600,
+        height=600,
+        mask=np.array(Image.open('登录/2.jpg'))
+    ).generate(mytext)
+    #词云背景图片
+    image_colors = ImageColorGenerator(np.array(Image.open('登录/2.jpg')))
+
+    #显示词云
+    plt.imshow(wordcloud.recolor(color_func=image_colors), interpolation='bilinear')
+    #plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    plt.show()
+
+    #词频排序
+    process_word = WordCloud.process_text(wordcloud, mytext)
+    sort = sorted(process_word.items(), key=lambda e:e[1], reverse=True)
+    #print(sort)
+    for i in range(0, len(sort)):
+        result = str(sort[i]).strip('()') + '\n'
+        main = result.split(',')[-2].strip('\'')
+        numa = result.split(',')[-1]
+        print(main, numa)
+        content = main + '  ' + numa
+        with open('词频.txt', 'a', encoding='utf-8') as f:
+            f.write(content)
+
+
+if __name__ == '__main__':
+    url = 'https://3w.huanqiu.com/a/2928e7/3xr4iBJEgf5?agt=8'
+    main(url)
